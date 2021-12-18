@@ -12,4 +12,4 @@ It works splitting a 2D space using horizontal and vertical lines in bin zones a
 
 ## Dungeon example
 
-![Dungeon like structure](dungeon.png)]
+![Dungeon like structure](dungeon.png)
