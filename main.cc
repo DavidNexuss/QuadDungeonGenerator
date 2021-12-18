@@ -4,10 +4,18 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
-#include <list>
 #include <queue>
 #include <cassert>
 using namespace std;
+
+#define PRINT_QUAD_TREE 0
+#define PRINT_BIN_WALLS 0
+#define PRINT_ROOM_LAYOUT 1
+
+#define PRINT_BRANCHES_LENGTH 0
+#define PRINT_PATHS 0
+#define PRINT_PASSAGES 0
+#define PRINT_ROOMS 1
 
 struct PII {
     int id;
@@ -17,14 +25,14 @@ struct PII {
     inline bool operator >(const PII& other) const { return distance > other.distance; }
 };
 
-vector<int> generateMinimumSpanningTree(const vector<list<PII>>& adjacencyList)
+vector<int> generateMinimumSpanningTree(const vector<vector<PII>>& adjacencyList)
 {       
     int size = adjacencyList.size();
     vector<int> minimumSpanningTree(size,-1);
     priority_queue<PII,vector<PII>,greater<PII>> Q;
     vector<int> marked(size);
     vector<int> distances(size,std::numeric_limits<int>::max());
-    Q.push({rand() % size,0});
+    Q.push({0,0});
     while(!Q.empty()) {
         PII current = Q.top();
         Q.pop();
@@ -43,6 +51,26 @@ vector<int> generateMinimumSpanningTree(const vector<list<PII>>& adjacencyList)
     return minimumSpanningTree;
 }
 
+vector<int> getGraphGrades(const vector<int>& graph)
+{
+    vector<int> grades(graph.size());
+    for (int i = 0; i < graph.size(); i++)
+    {
+        if(graph[i] < 0) continue;
+        grades[graph[i]]++;
+    }
+    return grades;
+}
+vector<vector<int>> reverseGraph(const vector<int>& graph)
+{
+    vector<vector<int>> R(graph.size());
+    for (size_t i = 0; i < graph.size(); i++)
+    {
+        if(graph[i] < 0) continue;
+        R[graph[i]].push_back(i);
+    }
+    return R;
+}
 void printRect(int x,int y,int width,int height,int r,int g,int b)
 {
     cout << "<rect x=\"" << x << "\" y=\"" << y << "\" width=\"" << width << "\" height=\""  << height << "\" style=\"fill:rgb(255,255,255);stroke-width:1;stroke:rgb(" << r << "," << g << "," << b << ")\"/>" << endl;
@@ -316,11 +344,31 @@ struct Room {
         y = (y2 + y1)/2;
     }
 
+
+    inline int xcommon(const Room& other) const {
+       // if(other.x1 == x1 && other.x2 == x2) return x2 - x1;
+        if(other.x1 >= x1 && other.x1 <= x2) return x2 - other.x1;
+        if(other.x2 >= x1 && other.x2 <= x2) return other.x2 - x1;
+        return 0;
+    }
+
+    inline int ycommon(const Room& other) const {
+       // if(other.y1 == y1 && other.y2 == y2) return y2 - y1;
+        if(other.y1 >= y1 && other.y1 <= y2) return y2 - other.y1;
+        if(other.y2 >= y1 && other.y2 <= y2) return other.y2 - y1;
+        return 0;
+    }
+    
+    inline int common(const Room& other) const {
+        return std::max((other.xcommon(*this),other.ycommon(*this)),std::max(xcommon(other),ycommon(other)));
+    }
+
+
     inline bool xclose(Room& other) const {
-        return ((other.x1 >= x1 && other.x1 <= x2) || (other.x2 >= x1 && other.x2 <= x2));
+        return ((other.x1 > x1 && other.x1 < x2) || (other.x2 > x1 && other.x2 < x2) || (other.x1 == x1 && other.x2 == x2));
     }
     inline bool yclose(Room& other) const {
-        return ((other.y1 >= y1 && other.y1 <= y2) || (other.y2 >= y1 && other.y2 <= y2));
+        return ((other.y1 > y1 && other.y1 < y2) || (other.y2 > y1 && other.y2 < y2) || (other.y1 == y1 && other.y2 == y2));
     }
 
     inline bool close(Room& other) const {
@@ -349,35 +397,53 @@ struct Room {
         a.center(x1,y1);
         b.center(x2,y2);
 
+        float size;
+        std::normal_distribution<float> normal(0,1.0);
+        float n = normal(randomEngine);
+        n = n * n;
+        size = 0.5;
+
         if(aClosex) {
             
-            int midx;
+            int low;
+            int high;
+
             if((b.x1 >= a.x1 && b.x1 <= a.x2)) {
-                midx = (b.x1 + a.x2) / 2;
+                low = b.x1;
+                high = a.x2;
             }
             else {
-                midx = (a.x1 + b.x2) / 2;
+                low = a.x1;
+                high = b.x2;
             }
 
-            px1 = midx - 1;
+            int midx = (low + high) / 2;
+            int s = size * (high - low)/2;
+            px1 = std::max(midx - s - 1,low);
             py1 = std::max(a.y1,b.y1);
-            px2 = midx + 1;
+            px2 = std::min(midx + s + 1,high);
             py2 = std::min(a.y2,b.y2);
         }
 
         if(aClosey) {
-            int midy;
+
+            int low;
+            int high;
 
             if(b.y1 >= a.y1 && b.y1 <= a.y2) {
-                midy = (b.y1 + a.y2) / 2;
+                low = b.y1;
+                high = a.y2;
             }
             else {
-                midy = (a.y1 + b.y2) / 2;
+                low = a.y1;
+                high = b.y2;
             }
+            int midy = (low + high) / 2;
+            int s = size * (high - low)/2;
             px1 = std::max(a.x1,b.x1);
-            py1 = midy - 1;
+            py1 = std::max(midy - 1 -s,low);
             px2 = std::min(a.x2,b.x2);
-            py2 = midy + 1;
+            py2 = std::min(midy + 1 + s,high);
         }
 
         
@@ -394,6 +460,10 @@ struct RoomLayout
     vector<Room> pasages;
 
     vector<int> roomLayout;
+    vector<vector<int>> reverseRoomLayout;
+
+    vector<int> roomTypes;
+    vector<int> branchesLength;
 
     void appendRoom(int x1,int y1,int x2,int y2,vector<int>& horizontalLines,vector<int>& verticalLines,vector<bool>& usedHorizontal,vector<bool>& usedVertical,vector<vector<int>>& occupiedCells)
     {
@@ -402,15 +472,16 @@ struct RoomLayout
         if(!rooms.back().generateRoom(x1,y1,x2,y2,horizontalLines,verticalLines,usedHorizontal,usedVertical,occupiedCells)) rooms.pop_back();
     }
 
-    vector<list<PII>> generateGraph()
+    vector<vector<PII>> generateGraph()
     {
-        vector<list<PII>> adjacentList(rooms.size());
+        vector<vector<PII>> adjacentList(rooms.size());
+        #pragma omp parallel for
         for(int i = 0; i < rooms.size(); i++)
         {
             for (int j = 0; j < rooms.size(); j++)
             {
                 int dst = rooms[i].distance(rooms[j]);
-                if(rooms[i].close(rooms[j]))
+                if(rooms[i].common(rooms[j]) > 4)
                     adjacentList[i].push_back(PII{j,dst});
             }
         }
@@ -419,7 +490,7 @@ struct RoomLayout
 
     void generatePaths() {
         roomLayout = generateMinimumSpanningTree(generateGraph());
-        
+        reverseRoomLayout = reverseGraph(roomLayout);
         for (int i = 0; i < roomLayout.size(); i++)
         {
             int u = i;
@@ -432,6 +503,38 @@ struct RoomLayout
         
     }
 
+    int queryRoomType(int u,vector<bool>& markedNodes,const vector<vector<int>>& graph,int branchLength) {
+        if(u < 0 || markedNodes[u]) return 0;
+
+        markedNodes[u] = true;        
+        int branches = graph[u].size();
+        int branchCount = branches - 1;
+
+        int nextBranch = branchCount != 0 ? 0 : branchLength + 1;
+
+        for(const int v : graph[u]) {
+            branchCount += queryRoomType(v,markedNodes,graph,nextBranch);
+        }
+
+        branchesLength[u] = branchLength;
+        return branchCount;
+    }
+    void generateRoomTypes() {
+        branchesLength = vector<int>(roomLayout.size());
+        vector<bool> markedNodes(roomLayout.size());
+        queryRoomType(0,markedNodes,reverseRoomLayout,0);
+    }
+
+    void printBranchesLength()
+    {
+        for (int i = 0; i < rooms.size(); i++)
+        {
+            int x,y;
+            rooms[i].center(x,y);
+            cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << endl;
+        }
+        
+    }
     void printPath(){
         for (int i = 0; i < roomLayout.size(); i++)
         {
@@ -449,15 +552,19 @@ struct RoomLayout
     }
     void print()
     {
-        for (int i = 0; i < rooms.size(); i++) {
-            printRect(rooms[i].x1,rooms[i].y1,rooms[i].x2 - rooms[i].x1,rooms[i].y2 - rooms[i].y1,255,0,200);
+        if(PRINT_ROOMS) {
+            for (int i = 0; i < rooms.size(); i++) {
+                printRect(rooms[i].x1,rooms[i].y1,rooms[i].x2 - rooms[i].x1,rooms[i].y2 - rooms[i].y1,255,0,200);
+            }
         }
         
-        for (int i = 0; i < pasages.size(); i++) {
-            printRect(pasages[i].x1,pasages[i].y1,pasages[i].x2 - pasages[i].x1,pasages[i].y2 - pasages[i].y1,0,0,255);
+        if(PRINT_PASSAGES) {
+            for (int i = 0; i < pasages.size(); i++) {
+                printRect(pasages[i].x1,pasages[i].y1,pasages[i].x2 - pasages[i].x1,pasages[i].y2 - pasages[i].y1,0,0,255);
+            }
         }
-        
-        printPath();
+        if(PRINT_PATHS)printPath();
+        if(PRINT_BRANCHES_LENGTH) printBranchesLength();
     }
 };
 struct Dungeon
@@ -471,9 +578,9 @@ struct Dungeon
 
     }
 
-    void generate(int depth) {
+    void generate(int depth,int wallcount) {
         quadTree.generate(depth);
-        walls.generate(700);
+        walls.generate(wallcount);
 
         quadTree.getRoot()->forEachLeave([&](int x1,int y1,int x2,int y2){
 
@@ -481,21 +588,27 @@ struct Dungeon
         });
 
         roomLayout.generatePaths();
+        roomLayout.generateRoomTypes();
 
 
     }
     void print() {
 
         cout << "<svg width=\"" << size << "\" height=\"" << size << "\">" << endl;
-        //quadTree.print();
-        //walls.print();
-        roomLayout.print();
+
+        if(PRINT_QUAD_TREE)   quadTree.print();
+        if(PRINT_BIN_WALLS)   walls.print();
+        if(PRINT_ROOM_LAYOUT) roomLayout.print();
+
         cout << "</svg>" << endl;
     }
 };
-int main()
+int main(int argc,char** argv)
 {
-    Dungeon dungeon(8000);
-    dungeon.generate(6);
+    int depth = argc > 1 ? std::stoi(argv[1]) : 5;
+    int walls = argc > 2 ? std::stoi(argv[2]) : 300;
+
+    Dungeon dungeon(600);
+    dungeon.generate(depth,walls);
     dungeon.print();
 }
