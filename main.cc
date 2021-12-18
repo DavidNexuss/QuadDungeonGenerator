@@ -12,11 +12,12 @@ using namespace std;
 #define PRINT_BIN_WALLS 0
 #define PRINT_ROOM_LAYOUT 1
 
-#define PRINT_BRANCHES_LENGTH 0
+#define PRINT_BRANCHES_LENGTH 1
 #define PRINT_PATHS 0
 #define PRINT_PASSAGES 0
 #define PRINT_ROOMS 1
 
+//Prim MST algoritthm
 struct PII {
     int id;
     int distance;
@@ -71,10 +72,12 @@ vector<vector<int>> reverseGraph(const vector<int>& graph)
     }
     return R;
 }
+
 void printRect(int x,int y,int width,int height,int r,int g,int b)
 {
     cout << "<rect x=\"" << x << "\" y=\"" << y << "\" width=\"" << width << "\" height=\""  << height << "\" style=\"fill:rgb(255,255,255);stroke-width:1;stroke:rgb(" << r << "," << g << "," << b << ")\"/>" << endl;
 }
+
 std::default_random_engine randomEngine;
 
 struct QuadTree
@@ -277,6 +280,7 @@ struct Walls
 struct Room {
     int x1,y1,x2,y2;
     int roomId;
+    int type;
 
     bool generateRoom(int x1,int y1,int x2,int y2,vector<int>& horizontalLines,vector<int>& verticalLines,vector<bool>& usedHorizontal,vector<bool>& usedVertical,vector<vector<int>>& occupiedCells) {
         
@@ -462,7 +466,6 @@ struct RoomLayout
     vector<int> roomLayout;
     vector<vector<int>> reverseRoomLayout;
 
-    vector<int> roomTypes;
     vector<int> branchesLength;
 
     void appendRoom(int x1,int y1,int x2,int y2,vector<int>& horizontalLines,vector<int>& verticalLines,vector<bool>& usedHorizontal,vector<bool>& usedVertical,vector<vector<int>>& occupiedCells)
@@ -503,28 +506,16 @@ struct RoomLayout
         
     }
 
-    int queryRoomType(int u,vector<bool>& markedNodes,const vector<vector<int>>& graph,int branchLength) {
-        if(u < 0 || markedNodes[u]) return 0;
+    //------[Debug print functions]--------------------------------------
 
-        markedNodes[u] = true;        
-        int branches = graph[u].size();
-        int branchCount = branches - 1;
-
-        int nextBranch = branchCount != 0 ? 0 : branchLength + 1;
-
-        for(const int v : graph[u]) {
-            branchCount += queryRoomType(v,markedNodes,graph,nextBranch);
+    void printCentered(const std::string& text) {
+        
+        for (int i = 0; i < rooms.size(); i++) {
+            int x,y;
+            rooms[i].center(x,y);
+            cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << endl;
         }
-
-        branchesLength[u] = branchLength;
-        return branchCount;
     }
-    void generateRoomTypes() {
-        branchesLength = vector<int>(roomLayout.size());
-        vector<bool> markedNodes(roomLayout.size());
-        queryRoomType(0,markedNodes,reverseRoomLayout,0);
-    }
-
     void printBranchesLength()
     {
         for (int i = 0; i < rooms.size(); i++)
@@ -567,6 +558,40 @@ struct RoomLayout
         if(PRINT_BRANCHES_LENGTH) printBranchesLength();
     }
 };
+
+float get_random() {
+    static std::default_random_engine e;
+    static std::uniform_real_distribution<> dis(0, 1); // rage 0 - 1
+    return dis(e);
+}
+
+struct RoomTypeGenerator {
+    
+    struct RoomTypeSpecification {
+        float averageSize;
+        float rarity;
+    };
+
+    std::vector<RoomTypeSpecification> roomTypes;
+
+    void generateRoomType(Room& room) const {
+       int id = 1;
+       for(const RoomTypeSpecification& spec : roomTypes) {
+           float expectedSizeDifference = std::sqrt(std::abs(room.area() - spec.averageSize));
+           if(get_random() * expectedSizeDifference * spec.rarity > 0.5f) {
+                room.roomId = id;
+           }
+
+           id++;
+       } 
+    }
+    void generateRoomTypes(RoomLayout& layout) const {
+        for(Room& room : layout.rooms) {
+            generateRoomType(room);
+        }
+    }
+};
+
 struct Dungeon
 {
     QuadTree quadTree;
@@ -578,20 +603,18 @@ struct Dungeon
 
     }
 
-    void generate(int depth,int wallcount) {
+    void generate(int depth,int wallcount,const RoomTypeGenerator& generator = RoomTypeGenerator()) {
         quadTree.generate(depth);
         walls.generate(wallcount);
 
         quadTree.getRoot()->forEachLeave([&](int x1,int y1,int x2,int y2){
-
             roomLayout.appendRoom(x1,y1,x2,y2,walls.horizontalLines,walls.verticalLines,walls.usedHorizontal,walls.usedVertical,walls.occupiedCells);
         });
 
         roomLayout.generatePaths();
-        roomLayout.generateRoomTypes();
-
-
+        generator.generateRoomTypes(roomLayout);
     }
+
     void print() {
 
         cout << "<svg width=\"" << size << "\" height=\"" << size << "\">" << endl;
