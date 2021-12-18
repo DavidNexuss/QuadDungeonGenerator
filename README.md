@@ -6,5 +6,10 @@ Many compile time rules are implemented for generating different printStatements
 It works splitting a 2D space using horizontal and vertical lines in bin zones and generates a random quad tree adjusting its children zone node size accordingly to its maximum size delimited by its own bin (just how roads align buildings in a city). Behaviour can be modified supplying different parameters to the generator, some examples:
 
 
+## City example
+
 ![City like structure](city.png)
+
+## Dungeon example
+
 ![Dungeon like structure](dungeon.png)]
