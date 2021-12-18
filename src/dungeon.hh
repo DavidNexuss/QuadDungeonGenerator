@@ -6,7 +6,6 @@
 #include <cmath>
 #include <queue>
 #include <cassert>
-using namespace std;
 
 #define PRINT_QUAD_TREE 0
 #define PRINT_BIN_WALLS 0
@@ -26,13 +25,13 @@ struct PII {
     inline bool operator >(const PII& other) const { return distance > other.distance; }
 };
 
-vector<int> generateMinimumSpanningTree(const vector<vector<PII>>& adjacencyList)
+std::vector<int> generateMinimumSpanningTree(const std::vector<std::vector<PII>>& adjacencyList)
 {       
     int size = adjacencyList.size();
-    vector<int> minimumSpanningTree(size,-1);
-    priority_queue<PII,vector<PII>,greater<PII>> Q;
-    vector<int> marked(size);
-    vector<int> distances(size,std::numeric_limits<int>::max());
+    std::vector<int> minimumSpanningTree(size,-1);
+    std::priority_queue<PII,std::vector<PII>,std::greater<PII>> Q;
+    std::vector<int> marked(size);
+    std::vector<int> distances(size,std::numeric_limits<int>::max());
     Q.push({0,0});
     while(!Q.empty()) {
         PII current = Q.top();
@@ -52,9 +51,9 @@ vector<int> generateMinimumSpanningTree(const vector<vector<PII>>& adjacencyList
     return minimumSpanningTree;
 }
 
-vector<int> getGraphGrades(const vector<int>& graph)
+std::vector<int> getGraphGrades(const std::vector<int>& graph)
 {
-    vector<int> grades(graph.size());
+    std::vector<int> grades(graph.size());
     for (int i = 0; i < graph.size(); i++)
     {
         if(graph[i] < 0) continue;
@@ -62,9 +61,9 @@ vector<int> getGraphGrades(const vector<int>& graph)
     }
     return grades;
 }
-vector<vector<int>> reverseGraph(const vector<int>& graph)
+std::vector<std::vector<int>> reverseGraph(const std::vector<int>& graph)
 {
-    vector<vector<int>> R(graph.size());
+    std::vector<std::vector<int>> R(graph.size());
     for (size_t i = 0; i < graph.size(); i++)
     {
         if(graph[i] < 0) continue;
@@ -75,7 +74,7 @@ vector<vector<int>> reverseGraph(const vector<int>& graph)
 
 void printRect(int x,int y,int width,int height,int r,int g,int b)
 {
-    cout << "<rect x=\"" << x << "\" y=\"" << y << "\" width=\"" << width << "\" height=\""  << height << "\" style=\"fill:rgb(255,255,255);stroke-width:1;stroke:rgb(" << r << "," << g << "," << b << ")\"/>" << endl;
+    std::cout << "<rect x=\"" << x << "\" y=\"" << y << "\" width=\"" << width << "\" height=\""  << height << "\" style=\"fill:rgb(255,255,255);stroke-width:1;stroke:rgb(" << r << "," << g << "," << b << ")\"/>" << std::endl;
 }
 
 std::default_random_engine randomEngine;
@@ -177,7 +176,7 @@ struct QuadTree
                 {
                     x = (x1 + x2) / 2;
                     y = (y1 + y2) / 2;
-                    cout << "<text x=\"" << x << "\" y=\"" << y << "\">" << depth << "</text>" << endl;
+                    std::cout << "<text x=\"" << x << "\" y=\"" << y << "\">" << depth << "</text>" << std::endl;
                 }
             }
         }
@@ -201,8 +200,8 @@ struct QuadTree
         }
     };
 
-    shared_ptr<Node> root;
-    QuadTree(int size) : root(make_shared<Node>())
+    std::shared_ptr<Node> root;
+    QuadTree(int size) : root(std::make_shared<Node>())
     {
         root->x1 = 0;
         root->y1 = 0;
@@ -220,12 +219,12 @@ struct QuadTree
         root->print();
     }
 
-    const shared_ptr<Node> getRoot() {
+    const std::shared_ptr<Node> getRoot() {
         return root;
     }
 };
-vector<int> generateLines(int count,int maxSize) {
-    vector<int> lines(count);   
+std::vector<int> generateLines(int count,int maxSize) {
+    std::vector<int> lines(count);   
     for(int i = 0; i < count; ++i) {
         lines[i] = rand() % maxSize;
     }
@@ -238,7 +237,7 @@ void printLine(int x1,int y1,int x2,int y2)
 {
     printf("<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" style=\"stroke:rgb(255,0,0);stroke-width:1\" />\n",x1,y1,x2,y2);
 }
-void printLines(const vector<int>& lines,const vector<bool>& mask,int orientation,int size) {
+void printLines(const std::vector<int>& lines,const std::vector<bool>& mask,int orientation,int size) {
     
     for(int i = 0; i < lines.size(); ++i)
     {
@@ -251,13 +250,13 @@ void printLines(const vector<int>& lines,const vector<bool>& mask,int orientatio
 
 struct Walls
 {
-    vector<int> horizontalLines;
-    vector<int> verticalLines;
+    std::vector<int> horizontalLines;
+    std::vector<int> verticalLines;
     
-    vector<bool> usedHorizontal;
-    vector<bool> usedVertical;
+    std::vector<bool> usedHorizontal;
+    std::vector<bool> usedVertical;
 
-    vector<vector<int>> occupiedCells;
+    std::vector<std::vector<int>> occupiedCells;
 
     int size;
     Walls(int _size) : size(_size) { }
@@ -265,9 +264,9 @@ struct Walls
     void generate(int count) {
         horizontalLines = generateLines(count,size);
         verticalLines = generateLines(count,size);
-        usedHorizontal = vector<bool>(count);
-        usedVertical = vector<bool>(count);
-        occupiedCells = vector<vector<int>>(count,vector<int>(count));
+        usedHorizontal = std::vector<bool>(count);
+        usedVertical = std::vector<bool>(count);
+        occupiedCells = std::vector<std::vector<int>>(count,std::vector<int>(count));
     }
 
 
@@ -282,7 +281,7 @@ struct Room {
     int roomId;
     int type;
 
-    bool generateRoom(int x1,int y1,int x2,int y2,vector<int>& horizontalLines,vector<int>& verticalLines,vector<bool>& usedHorizontal,vector<bool>& usedVertical,vector<vector<int>>& occupiedCells) {
+    bool generateRoom(int x1,int y1,int x2,int y2,std::vector<int>& horizontalLines,std::vector<int>& verticalLines,std::vector<bool>& usedHorizontal,std::vector<bool>& usedVertical,std::vector<std::vector<int>>& occupiedCells) {
         
         auto lix = upper_bound(verticalLines.begin(), verticalLines.end(),x1);
         auto lfx = lower_bound(verticalLines.begin(), verticalLines.end(),x2) - 1;
@@ -460,24 +459,24 @@ struct Room {
 
 struct RoomLayout
 {
-    vector<Room> rooms;
-    vector<Room> pasages;
+    std::vector<Room> rooms;
+    std::vector<Room> pasages;
 
-    vector<int> roomLayout;
-    vector<vector<int>> reverseRoomLayout;
+    std::vector<int> roomLayout;
+    std::vector<std::vector<int>> reverseRoomLayout;
 
-    vector<int> branchesLength;
+    std::vector<int> branchesLength;
 
-    void appendRoom(int x1,int y1,int x2,int y2,vector<int>& horizontalLines,vector<int>& verticalLines,vector<bool>& usedHorizontal,vector<bool>& usedVertical,vector<vector<int>>& occupiedCells)
+    void appendRoom(int x1,int y1,int x2,int y2,std::vector<int>& horizontalLines,std::vector<int>& verticalLines,std::vector<bool>& usedHorizontal,std::vector<bool>& usedVertical,std::vector<std::vector<int>>& occupiedCells)
     {
         rooms.emplace_back();
         rooms.back().roomId = rooms.size() - 1;
         if(!rooms.back().generateRoom(x1,y1,x2,y2,horizontalLines,verticalLines,usedHorizontal,usedVertical,occupiedCells)) rooms.pop_back();
     }
 
-    vector<vector<PII>> generateGraph()
+    std::vector<std::vector<PII>> generateGraph()
     {
-        vector<vector<PII>> adjacentList(rooms.size());
+        std::vector<std::vector<PII>> adjacentList(rooms.size());
         #pragma omp parallel for
         for(int i = 0; i < rooms.size(); i++)
         {
@@ -513,7 +512,7 @@ struct RoomLayout
         for (int i = 0; i < rooms.size(); i++) {
             int x,y;
             rooms[i].center(x,y);
-            cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << endl;
+            std::cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << std::endl;
         }
     }
     void printBranchesLength()
@@ -522,7 +521,7 @@ struct RoomLayout
         {
             int x,y;
             rooms[i].center(x,y);
-            cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << endl;
+            std::cout << "<text x=\"" << (x - 5) << "\" y=\"" << (y + 7) << "\">" << branchesLength[i] << "</text>" << std::endl;
         }
         
     }
@@ -617,21 +616,12 @@ struct Dungeon
 
     void print() {
 
-        cout << "<svg width=\"" << size << "\" height=\"" << size << "\">" << endl;
+        std::cout << "<svg width=\"" << size << "\" height=\"" << size << "\">" << std::endl;
 
         if(PRINT_QUAD_TREE)   quadTree.print();
         if(PRINT_BIN_WALLS)   walls.print();
         if(PRINT_ROOM_LAYOUT) roomLayout.print();
 
-        cout << "</svg>" << endl;
+        std::cout << "</svg>" << std::endl;
     }
 };
-int main(int argc,char** argv)
-{
-    int depth = argc > 1 ? std::stoi(argv[1]) : 5;
-    int walls = argc > 2 ? std::stoi(argv[2]) : 300;
-
-    Dungeon dungeon(600);
-    dungeon.generate(depth,walls);
-    dungeon.print();
-}

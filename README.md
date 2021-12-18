@@ -8,8 +8,8 @@ It works splitting a 2D space using horizontal and vertical lines in bin zones a
 
 ## City example
 
-![City like structure](city.png)
+![City like structure](showcase/city.png)
 
 ## Dungeon example
 
-![Dungeon like structure](dungeon.png)
+![Dungeon like structure](showcase/dungeon.png)
